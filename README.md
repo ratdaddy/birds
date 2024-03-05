@@ -4,8 +4,8 @@
 
 ### Data Fetching
 
-Both endpoints rely heavily on the tree heirarchy imposed by the node object's `parent_id`.
-As such, it is probably most efficient to query this heirarcy using a (recursive CTE)[https://www.postgresql.org/docs/current/queries-with.html#QUERIES-WITH-RECURSIVE] in the database (postgresql in this example) rather than repeatedly querying the database, building model objects, etc. in the application.
+Both endpoints rely heavily on the tree hierarchy imposed by the node object's `parent_id`.
+As such, it is probably most efficient to query this hierarcy using a [recursive CTE](https://www.postgresql.org/docs/current/queries-with.html#QUERIES-WITH-RECURSIVE) in the database (postgresql in this example) rather than repeatedly querying the database, building model objects, etc. in the application.
 I don't believe Rails natively supports this type of query (there is a `.with` AREL method that would do non-recursive CTE queries).
 
 I made the choice to do the complete query and filtering (so only selecting root and the lowest common ancestor) and joining to other tables in the database.
@@ -19,10 +19,10 @@ This lead to overly expensive database hosting costs or in some cases, running o
 ### API Parameters
 
 The problem description suggests that API parameters (at least for the `/common_ancestor` endpoint) be passed in as http query parameters.
-It wasn't specified but I went ahead and extended this to the `/birds` endpoint.
+It wasn't specified but I went ahead and extended this to the `/birds` endpoint with a parameter named `node_ids` which takes a comma-separated list of node ids as a string.
 
 I also added validation of parameter keys and value types which I don't believe Rails provides a particularly complete solution out of the box.
-To assist with this I added the (dry-schema)[https://dry-rb.org/gems/dry-schema/1.13/] gem and build and validate parameter schemas in the controllers.
+To assist with this I added the [dry-schema](https://dry-rb.org/gems/dry-schema/1.13/) gem and build and validate parameter schemas in the controllers.
 
 ## Application Info
 
@@ -44,6 +44,9 @@ $ gem install pg -- --with-pg-include=/opt/homebrew/opt/libpq/include --with-pg-
 ```
 $ rails db:seed
 $ rails s
+```
+In another terminal:
+```
 $ curl 'localhost:3000/common_ancestor?a=5497637&b=2820230'
 >> {"root_id":130,"lowest_common_ancestor_id":125,"depth":2}
 $ curl 'localhost:3000/common_ancestor?a=5497637&b=130'
@@ -55,6 +58,6 @@ $ curl 'localhost:3000/common_ancestor?a=9&b=4430546'
 $ curl 'localhost:3000/common_ancestor?a=4430546&b=4430546'
 >> {"root_id":130,"lowest_common_ancestor_id":4430546,"depth":3}
 
-$ curl 'localhost:3000/birds?node_ids=130'
+$ curl 'localhost:3000/birds?node_ids=130,125'
 >> [1,2,3,4,5,6]
 ```
